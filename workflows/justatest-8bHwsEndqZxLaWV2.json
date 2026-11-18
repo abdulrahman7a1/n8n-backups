@@ -1,0 +1,374 @@
+{
+  "id": "8bHwsEndqZxLaWV2",
+  "name": "justatest*",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ticketing-system",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "757f23cb-3030-47d8-9132-7a5ab647788f",
+      "name": "Webhook",
+      "webhookId": "07a34704-58fd-4e22-9ffc-22722275adbb"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8cbc6dee-f15d-4026-8296-2f329eea6360",
+              "name": "customer_name",
+              "value": "={{ $json.customer_name }}",
+              "type": "string"
+            },
+            {
+              "id": "f3a4be23-d9ed-40df-9e5c-71127ffc1603",
+              "name": "email",
+              "value": "={{ $json.email  || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "cb9754b6-f3aa-427a-a6da-5a8892b89e72",
+              "name": "department",
+              "value": "={{ $json.department || 'general' }}",
+              "type": "string"
+            },
+            {
+              "id": "0ea08abf-5db5-4a3c-8460-11b990760ab5",
+              "name": "issue",
+              "value": "={{ $json.issue || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "2624aa44-b5f9-4e00-9d9f-7589556b5ad5",
+              "name": "created_at",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "d2566d44-9869-48b1-b5a4-a288f83d56a3",
+              "name": "ticket_id",
+              "value": "={{ \"TKT -\"+ Date.now() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "id": "2212df96-a5ac-4a8c-a86f-32fe389af7e9",
+      "name": "normalize input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "15b1aa8a-a05d-47bf-8cea-d6ab05cdaa48",
+              "leftValue": "={{ $json.customer_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "a5d4a80f-660b-4d79-90d8-ef5262e5db39",
+              "leftValue": "={{ $json.issue }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "3c6e6975-916f-434c-8cd1-aae1cb2cb228",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "fcecf2d7-95fd-4d99-b2ce-a7a8264e0543",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        704,
+        96
+      ],
+      "id": "08075af0-3f1f-4684-afe5-460f81ebd760",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "chatId": "5129000759",
+        "text": "test",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        912,
+        96
+      ],
+      "id": "63834136-721d-4d8e-b4d3-cdd4d5fae238",
+      "name": "Send a text message",
+      "webhookId": "c01754c8-baf1-4e0c-8203-2583df8a22d8",
+      "credentials": {
+        "telegramApi": {
+          "id": "axUOxsLb8DwCmnkM",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"customer_name\": \"Forat\",\n  \"issue\": \"my payment faild\",\n  \"department\": \"Marketing\",\n  \"email\": \"maen.forat@gmail.com\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        96
+      ],
+      "id": "6c8258d7-a527-4091-a7dd-61b01267f8f1",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "options": {
+          "systemMessage": "You are a senior "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        656,
+        -96
+      ],
+      "id": "c1911506-93da-4c03-9c5e-9372e8dfd9e6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        320
+      ],
+      "id": "494fca37-bbd5-4ea5-b8e4-216b617c347d",
+      "name": "Code Tool"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        528,
+        112
+      ],
+      "id": "6c9986f5-a163-4f89-8166-4d6d8792d979",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "qQmkc40n9C2qs8A8",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5129000759",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1008,
+        -96
+      ],
+      "id": "1c42cc84-42d3-4867-a9bc-8a5e5c917cc2",
+      "name": "Send a text message1",
+      "webhookId": "921ca649-ace7-4eab-952c-568c8f177891",
+      "credentials": {
+        "telegramApi": {
+          "id": "axUOxsLb8DwCmnkM",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"customer_name\": \"Forat\",\n  \"issue\": \"my payment faild\",\n  \"department\": \"Marketing\",\n  \"email\": \"maen.forat@gmail.com\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1216,
+        -96
+      ],
+      "id": "f51d4401-027c-4eb6-8889-715481dae9df",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "normalize input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "normalize input": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-04-08T17:38:47.980Z"
+}

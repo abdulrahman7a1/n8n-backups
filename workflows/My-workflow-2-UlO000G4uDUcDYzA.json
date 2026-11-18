@@ -1,0 +1,83 @@
+{
+  "id": "UlO000G4uDUcDYzA",
+  "name": "My workflow 2",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "27ae4fe1-8c49-4a25-b721-f56464b2ff53",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{\n{\n\"text\": \"Alert! A Workflow has crashed workflow: \" +json.workflow.name + \"ece ID: \"+ $json.execution.id + \"Error\" +$json.execution.error.message\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "a9fbccf9-f81c-44dc-874e-53ecae2454b3",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "chatId": "5129000759",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        307,
+        0
+      ],
+      "id": "c80237eb-6f72-4d0b-ba27-b4ab084f78be",
+      "name": "Send a text message",
+      "webhookId": "b92f151a-0c06-4121-9637-6da1d2d03d8f",
+      "credentials": {
+        "telegramApi": {
+          "id": "axUOxsLb8DwCmnkM",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-04-01T17:47:11.930Z"
+}

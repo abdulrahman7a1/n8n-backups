@@ -1,0 +1,64 @@
+{
+  "id": "LondXcQCC6eCcyS8",
+  "name": "[SUB2]",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "81ca4017-971a-41f7-9f33-cfbc35cb9e28",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a8d7d8b-98d3-47bf-bf8a-30ce9d534a6e",
+              "name": "={{\n{\n\"name\": ($json.name || \"\").trim().toUpperCase(),\n\"phone\": (($json.phone || \"\").replace(/\\D/g,)),\n\"source\": $json.source || \"unknown\"\n}\n}}",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "12e811ba-f341-4f78-b8c4-806cef481984",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-04-01T17:38:11.883Z"
+}

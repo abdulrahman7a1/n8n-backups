@@ -1,0 +1,71 @@
+{
+  "id": "gy5GSxttzPa5PAjM",
+  "name": "[SYS]Error Handler",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ae4994a4-1399-4b3d-9bcc-e15af571db00",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7def14bf-2e70-4730-97b1-68178ffc8cca",
+              "name": "workflow name",
+              "value": "={{ $json.workflow.name }}",
+              "type": "string"
+            },
+            {
+              "id": "6ce6c38b-389c-41aa-93e4-ff31bb2af616",
+              "name": "error message",
+              "value": "={{ $json.execution.error.message }}",
+              "type": "string"
+            },
+            {
+              "id": "7feddc57-0258-4f95-b720-08920f6df5da",
+              "name": "execution id",
+              "value": "={{ $json.execution.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "9eb3af79-4d41-47a8-8a4a-d1417d65a5d5",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-04-08T15:16:45.010Z"
+}

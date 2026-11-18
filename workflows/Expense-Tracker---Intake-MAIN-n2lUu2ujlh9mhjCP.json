@@ -1,0 +1,759 @@
+{
+  "id": "n2lUu2ujlh9mhjCP",
+  "name": "Expense Tracker - Intake[MAIN]",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "expense-tracker",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "49f91ccc-c624-4a4e-a5de-e41d5e3e935e",
+      "name": "Receive Expense Webhook",
+      "webhookId": "e5052823-50bf-4c74-ab68-0fe8e40852c2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "eb581892-dc9c-43f7-b547-125aa9decb9f",
+              "name": "amount",
+              "value": "={{ $json.body.amount }}",
+              "type": "number"
+            },
+            {
+              "id": "cec408a4-040d-48fe-a8a8-45bd1c0685a7",
+              "name": "description",
+              "value": "={{ $json.body.description }}",
+              "type": "string"
+            },
+            {
+              "id": "608cddb4-3dc1-470f-a6d8-fde91e0fc803",
+              "name": "category",
+              "value": "={{ $json.body.category || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "72467f4f-a878-4e08-be6b-9f41b020b854",
+              "name": "date",
+              "value": "={{ $json.body.date \n\n $now.toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "e7bab7dc-76c1-4db1-b606-a4d198c1a8f1",
+              "name": "source",
+              "value": "={{ $json.body.source \n\n \"manual-test\" }}",
+              "type": "string"
+            },
+            {
+              "id": "26e296f6-6e00-4ad8-bb3f-28b013e1bed3",
+              "name": "currency",
+              "value": "={{ $json.body.currency \n\n \"JOD\" }}",
+              "type": "string"
+            },
+            {
+              "id": "eb101367-0554-4ce7-af46-a6a6d3100368",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "5ef53390-ad61-431c-b83e-d39827cd91b8",
+              "name": "expense_id",
+              "value": "={{ \"EXP-\" + Date.now() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "3a7f22cf-d9af-4e7e-8bbe-dca9254426c1",
+      "name": "Normalize Expense Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "21a0d889-6d6b-4f4a-8568-ee47f144450a",
+              "leftValue": "={{ $json.amount }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "34bc8abb-cc1d-4fe0-990b-9d9653cccab1",
+              "leftValue": "={{ $json.amount }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "34e1448c-0120-41b1-85cb-49c956cd9c1a",
+              "leftValue": "={{ $json.description }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "e9cd766d-ce2e-4cb8-991e-c968c77ad81c",
+      "name": "Validate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Classify this expense into exactly one category from this list:\nFood, Transport, Shopping, Bills, Entertainment, Health, Education, Other.\n\nExpense description: {{$json.description}}\n\nReturn only the category name and nothing else.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        640,
+        -96
+      ],
+      "id": "8cc8f422-b8ae-4b85-8361-2fe0e0125bfd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        640,
+        112
+      ],
+      "id": "da3afe55-6e3c-4eb7-bb2f-7e95a9622f3b",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "qQmkc40n9C2qs8A8",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a541c5dd-0de6-487e-8096-faec64734362",
+              "name": "amount",
+              "value": "={{ $('Validate').item.json.amount }}",
+              "type": "number"
+            },
+            {
+              "id": "5165ca08-ee0b-480c-8d5d-be6f854847cc",
+              "name": "description",
+              "value": "={{ $('Validate').item.json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "9093261e-df2c-4983-87b9-e224065a5cae",
+              "name": "category",
+              "value": "={{ $('Validate').item.json.category }}",
+              "type": "string"
+            },
+            {
+              "id": "899f1719-1aa0-4f86-9864-a8ac0a94f28a",
+              "name": "date",
+              "value": "={{ $('Validate').item.json.date }}",
+              "type": "string"
+            },
+            {
+              "id": "5bc706d4-e49c-464c-b759-863f22690af5",
+              "name": "source",
+              "value": "={{ $('Validate').item.json.source }}",
+              "type": "string"
+            },
+            {
+              "id": "b2176dfe-5a43-4a13-9847-79f13766941e",
+              "name": "currency",
+              "value": "={{ $('Validate').item.json.currency }}",
+              "type": "string"
+            },
+            {
+              "id": "bdb03a0a-e9aa-4e5b-90a1-f99988b3f1fc",
+              "name": "timestamp",
+              "value": "={{ $('Validate').item.json.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "0c12d4f5-e849-4775-a899-e030d68ec066",
+              "name": "expense_id",
+              "value": "={{ $('Validate').item.json.expense_id }}",
+              "type": "string"
+            },
+            {
+              "id": "5ecda958-4152-4ec2-a1d8-b48b1422a97f",
+              "name": "ai_category",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "d8e24c61-2080-4c16-b31f-5c69bd71fd5a",
+              "name": "final_category",
+              "value": "={{ $json.output || $('Validate').item.json.category || \"Other\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        992,
+        -96
+      ],
+      "id": "0fa99be0-a4e6-4551-8006-f2c79873055e",
+      "name": "Set Categorized Expense"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "14WpyLag04-ckVxHyDs6cPue_vdBx5C2xWop6vUcDYTo",
+          "mode": "list",
+          "cachedResultName": "Expense Tracker Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WpyLag04-ckVxHyDs6cPue_vdBx5C2xWop6vUcDYTo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Expenses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WpyLag04-ckVxHyDs6cPue_vdBx5C2xWop6vUcDYTo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "expense_id": "={{ $json.expense_id }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "date": "={{ $json.date }}",
+            "amount": "={{ $json.amount }}",
+            "currency": "={{ $json.currency }}",
+            "description": "={{ $json.description }}",
+            "category": "={{ $json.category }}",
+            "ai_category": "={{ $json.ai_category }}",
+            "final_category": "={{ $json.final_category }}",
+            "source": "={{ $json.source }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "expense_id",
+              "displayName": "expense_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_category",
+              "displayName": "ai_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "final_category",
+              "displayName": "final_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        -96
+      ],
+      "id": "152d0fc7-59d4-4116-b9d3-6587e54d7043",
+      "name": "Sending Expense to Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cVhGphyicCgILUJ0",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5129000759",
+        "text": "=✅ Expense saved\n\nAmount: {{$json.amount}} {{$json.currency}}\nDescription: {{$json.description}}\nCategory: {{$json.final_category}}\nDate: {{$json.date}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1408,
+        -96
+      ],
+      "id": "a339de60-9d14-45da-947c-38684c6307a1",
+      "name": "Send Telegram Confirmation",
+      "webhookId": "d23f8337-ac3c-4233-a196-5efce722589c",
+      "credentials": {
+        "telegramApi": {
+          "id": "axUOxsLb8DwCmnkM",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7e0becfb-9808-4e3c-97aa-ddd1aadfad96",
+              "name": "expense_id",
+              "value": "={{ $('Normalize Expense Data').item.json.expense_id \n\n (\"REJ-\" + Date.now()) }}",
+              "type": "string"
+            },
+            {
+              "id": "9f35b389-3b6a-472d-a93b-fc00f5a616c9",
+              "name": "timestamp",
+              "value": "={{ $('Normalize Expense Data').item.json.timestamp \n\n $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "293e6eea-3331-452d-9e62-ae1d5bbd8a62",
+              "name": "date",
+              "value": "={{ $('Normalize Expense Data').item.json.date \n\n $now.toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "a96929a5-fa07-4165-8078-2129b26bc60d",
+              "name": "amount",
+              "value": "={{ $('Normalize Expense Data').item.json.amount }}",
+              "type": "number"
+            },
+            {
+              "id": "ff805b14-2a05-4307-b1c5-df40173b8ddc",
+              "name": "currency",
+              "value": "={{ $('Normalize Expense Data').item.json.currency \n\n \"JOD\" }}",
+              "type": "string"
+            },
+            {
+              "id": "bb848884-7582-4a45-95b3-410a0a26de97",
+              "name": "description",
+              "value": "={{ $('Normalize Expense Data').item.json.description \n\n \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "c3806b61-1759-4d88-b5bb-46d0dadbb1af",
+              "name": "category",
+              "value": "={{ $('Normalize Expense Data').item.json.category \n\n \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "7a1a2ff5-50aa-43af-97ae-7b79f044612a",
+              "name": "source",
+              "value": "={{ $('Normalize Expense Data').item.json.source \n\n \"unknown\" }}",
+              "type": "string"
+            },
+            {
+              "id": "1a18db9a-c39f-4e6d-9124-ba8420317044",
+              "name": "reject_reason",
+              "value": "Invalid input: amount missing/non-positive or description is empty",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        336
+      ],
+      "id": "7f173214-4ad6-4099-b889-9884a150be88",
+      "name": "Set Rejected Expense"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "14WpyLag04-ckVxHyDs6cPue_vdBx5C2xWop6vUcDYTo",
+          "mode": "list",
+          "cachedResultName": "Expense Tracker Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WpyLag04-ckVxHyDs6cPue_vdBx5C2xWop6vUcDYTo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 803003090,
+          "mode": "list",
+          "cachedResultName": "Rejected_Expenses",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14WpyLag04-ckVxHyDs6cPue_vdBx5C2xWop6vUcDYTo/edit#gid=803003090"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "expense_id": "={{ $json.expense_id }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "date": "={{ $json.date }}",
+            "amount": "={{ $json.amount }}",
+            "currency": "={{ $json.currency }}",
+            "description": "={{ $json.description }}",
+            "category": "={{ $json.category }}",
+            "source": "={{ $json.source }}",
+            "reject_reason": "={{ $json.reject_reason }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "expense_id",
+              "displayName": "expense_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reject_reason",
+              "displayName": "reject_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        336
+      ],
+      "id": "8863ee5e-c8c5-473f-a8ef-cdd1748c6965",
+      "name": "Save Rejected Expense",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cVhGphyicCgILUJ0",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "5129000759",
+        "text": "=❌ Expense rejected  Reason: {{$json.reject_reason}} Amount: {{$json.amount}} Description: {{$json.description}} Date: {{$json.date}} Source: {{$json.source}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1024,
+        336
+      ],
+      "id": "fa964f1c-a0ad-47ae-9fef-71944750a402",
+      "name": "Send Reject Alert",
+      "webhookId": "bdd65ee4-3b74-4cd8-ac80-bf1425d956de",
+      "credentials": {
+        "telegramApi": {
+          "id": "axUOxsLb8DwCmnkM",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Receive Expense Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Expense Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Expense Data": {
+      "main": [
+        [
+          {
+            "node": "Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Rejected Expense",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Set Categorized Expense",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Categorized Expense": {
+      "main": [
+        [
+          {
+            "node": "Sending Expense to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sending Expense to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Rejected Expense": {
+      "main": [
+        [
+          {
+            "node": "Save Rejected Expense",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Rejected Expense": {
+      "main": [
+        [
+          {
+            "node": "Send Reject Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-04-23T17:59:21.963Z"
+}

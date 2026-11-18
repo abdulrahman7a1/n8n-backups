@@ -1,0 +1,82 @@
+{
+  "id": "612OoxxDeObFDFdu",
+  "name": "project9",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "items = _input.all()\n\nfor x in items:\n    customer_name = x.json.get(\"customer_name\", \"\")\n    purchase_amount = float(x.json.get(\"purchase_amount\", 0))\n    loyalty_points = purchase_amount * 1.5\n\n    item.json[\"customer_name\"] = customer_name\n    item.json[\"purchase_amount\"] = purchase_amount\n    item.json[\"loyalty_points\"] = loyalty_points\n\nreturn items"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8ca5e9e5-5b15-459b-bf55-55a6426cebe7",
+      "name": "Code in Python"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"customer_name\": \"={{ $json.customer_name }}\",\n  \"purchase_amount\": \"={{ $json.purchase_amount }}\",\n  \"loyalty_points\": \"={{ $json.loyalty_points }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        384,
+        0
+      ],
+      "id": "60b4ee99-16b4-4bbb-9fd0-d7c8ce419ae9",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "project9",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f529396a-d575-4bf3-9545-d4609192d163",
+      "name": "Webhook",
+      "webhookId": "76e18ad1-a93e-401d-86db-503e3def3a43"
+    }
+  ],
+  "connections": {
+    "Code in Python": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in Python",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-04-08T14:24:20.543Z"
+}

@@ -1,0 +1,57 @@
+{
+  "id": "OfwzTpApGyj9NJA6",
+  "name": "Steam Achievement Alerts",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "54a503f8-9cd9-4021-80c2-86ce74d89ddf",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================= SETTINGS (fill these in) =================\nconst STEAM_API_KEY = '***REDACTED***';\nconst STEAM_ID = '76561198347493742';     // 17 digits, starts with 7656...\nconst NTFY_TOPIC = 'Trophies-abdomario-x0007';  // e.g. trophies-ahmad-x7k29q\n// For testing only: set to e.g. 72 to get alerts for unlocks from the\n// last 72 hours. Set back to 0 before turning the workflow on.\nconst TEST_LOOKBACK_HOURS = 0;\n// =============================================================\n\nconst state = $getWorkflowStaticData('global');\nconst now = Math.floor(Date.now() / 1000);\n\n// First real run: remember \"now\" so you don't get spammed with old unlocks.\nlet since = state.lastCheck ?? now;\nif (TEST_LOOKBACK_HOURS > 0) since = now - TEST_LOOKBACK_HOURS * 3600;\n\nconst api = 'https://api.steampowered.com';\nconst get = (path, qs) =>\n  this.helpers.httpRequest({ method: 'GET', url: api + path, qs, json: true });\n\n// 1) Games you played in the last 2 weeks\nconst recent = await get('/IPlayerService/GetRecentlyPlayedGames/v1/', {\n  key: STEAM_API_KEY, steamid: STEAM_ID, count: 10,\n});\nconst games = recent?.response?.games ?? [];\n\nconst sent = [];\n\nfor (const game of games) {\n  // 2) Your achievements for this game\n  let list;\n  try {\n    const res = await get('/ISteamUserStats/GetPlayerAchievements/v1/', {\n      key: STEAM_API_KEY, steamid: STEAM_ID, appid: game.appid, l: 'english',\n    });\n    list = res?.playerstats?.achievements;\n  } catch (e) {\n    continue; // game has no achievements, or profile game details are private\n  }\n  if (!list || list.length === 0) continue;\n\n  const newOnes = list\n    .filter(a => a.achieved === 1 && a.unlocktime > since)\n    .sort((a, b) => a.unlocktime - b.unlocktime);\n  if (newOnes.length === 0) continue;\n\n  // 3) Icons for the achievements (only fetched when something is new)\n  const icons = {};\n  try {\n    const schema = await get('/ISteamUserStats/GetSchemaForGame/v2/', {\n      key: STEAM_API_KEY, appid: game.appid, l: 'english',\n    });\n    for (const s of schema?.game?.availableGameStats?.achievements ?? []) {\n      icons[s.name] = s.icon;\n    }\n  } catch (e) { /* icons are optional */ }\n\n  const total = list.length;\n  const unlocked = list.filter(a => a.achieved === 1).length;\n  const percent = Math.round((unlocked / total) * 100);\n\n  for (const a of newOnes) {\n    const msg = {\n      topic: NTFY_TOPIC,\n      title: `Trophy unlocked: ${game.name}`,\n      message: `${a.name || a.apiname}\\n${a.description || '(hidden achievement)'}\\nProgress: ${unlocked}/${total} (${percent}%)`,\n      tags: ['trophy'],\n    };\n    if (icons[a.apiname]) msg.icon = icons[a.apiname];\n    await this.helpers.httpRequest({ method: 'POST', url: 'https://ntfy.sh/', body: msg, json: true });\n    sent.push({ game: game.name, achievement: a.name || a.apiname, progress: `${unlocked}/${total}` });\n  }\n\n  // 4) Platinum: everything unlocked, and the last one just happened\n  if (unlocked === total) {\n    await this.helpers.httpRequest({\n      method: 'POST', url: 'https://ntfy.sh/', json: true,\n      body: {\n        topic: NTFY_TOPIC,\n        title: `PLATINUM: ${game.name}`,\n        message: `All ${total} achievements unlocked!`,\n        tags: ['trophy', 'tada'],\n        priority: 5,\n      },\n    });\n    sent.push({ game: game.name, achievement: 'PLATINUM', progress: `${total}/${total}` });\n  }\n}\n\nstate.lastCheck = now;\n\nreturn [{ json: { checkedGames: games.length, since: new Date(since * 1000).toISOString(), notificationsSent: sent.length, sent } }];\n"
+      },
+      "id": "1eb38080-d32c-468d-91c5-cf4c4cafa50c",
+      "name": "Check Steam & Notify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Check Steam & Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-11-18T09:07:58.616Z"
+}

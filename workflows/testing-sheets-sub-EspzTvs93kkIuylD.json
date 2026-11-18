@@ -1,0 +1,158 @@
+{
+  "id": "EspzTvs93kkIuylD",
+  "name": "testing-sheets[sub]",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "47c4ea80-0a74-44cf-a6ab-3c2a069a0b33",
+              "name": "hi",
+              "value": "abdo",
+              "type": "string"
+            },
+            {
+              "id": "71d58449-00f5-4f0f-ab94-1ef1472ad5f6",
+              "name": "bye",
+              "value": "abdo!",
+              "type": "string"
+            },
+            {
+              "id": "64a02f17-5a4d-4bb9-a168-61b9e5ac4f6f",
+              "name": "why?",
+              "value": "why what? i am abdo!",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "7b192d21-fcc3-4ce9-8370-dbdf676a22f7",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_Uf4yPR7w6o1N-t1BsnCaxaztmKncRIub0glVJSo4uo",
+          "mode": "list",
+          "cachedResultName": "test-n8n",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_Uf4yPR7w6o1N-t1BsnCaxaztmKncRIub0glVJSo4uo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_Uf4yPR7w6o1N-t1BsnCaxaztmKncRIub0glVJSo4uo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "hi": "={{ $json.hi }}",
+            "bye": "={{ $json.bye }}",
+            "why?": "={{ $json['why?'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "hi",
+              "displayName": "hi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "bye",
+              "displayName": "bye",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "why?",
+              "displayName": "why?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3c214f5c-8b83-4cd6-aedf-062c5c0a9334",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cVhGphyicCgILUJ0",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a63cea97-2ca9-499c-ae2c-e8f98a72f59b",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-04-04T15:55:04.640Z"
+}

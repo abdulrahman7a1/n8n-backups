@@ -1,0 +1,411 @@
+{
+  "id": "uWKRpQqSpvTe0wVp",
+  "name": "project 11",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a strict message classification robot.\n\nYour task is to classify the following customer message into exactly one of these categories:\nBilling\nSupport\nSales\nSpam\n\nClassification rules:\n- Billing: payments, refunds, invoices, charges, subscriptions, card/payment failures\n- Support: bugs, errors, login issues, password reset, technical help, account problems\n- Sales: pricing, plans, features, demos, buying intent, upgrades, business inquiries\n- Spam: irrelevant, promotional, scam-like, phishing, nonsense, or messages unrelated to the company/services\n\nRules:\n- Output only one word\n- The output must be exactly one of these:\nBilling\nSupport\nSales\nSpam\n- Do not explain\n- Do not add punctuation\n- Do not add extra text\n- Do not say \"The category is...\"\n\nCustomer message:\n{{ $json.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a strict classification agent. Output ONLY valid JSON.\nNo markdown. No extra text."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "6ce25ba2-04a5-404f-90c5-2ef2d4333514",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        160,
+        256
+      ],
+      "id": "6ff70261-6a61-4fb6-a353-c1541612cbdf",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "qQmkc40n9C2qs8A8",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\"category\": \"Billing\",\n  \"reason\": \"the user mention payment or invoice issue\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        208
+      ],
+      "id": "2d6d16ed-b031-4105-937c-8a35746c5cb6",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Billing",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "e3d21572-6ac5-4bb6-b559-b6ee69ad2c42"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "214919de-34ee-4414-ba04-07cb0979b8ec",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3403ecb1-8184-4b43-b36d-a4a22dfa7053",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "20405e4c-9bc3-4361-8e71-2a47ea60b1fa",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Spam",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "30510391-87be-45b2-b125-dd078b06ddee",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bac9deaf-2744-4afb-a1d6-35e479f744cb",
+              "name": "reply",
+              "value": "=Billing queue selected reason: {{ $json.output.reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        768,
+        -176
+      ],
+      "id": "80b1afe7-c5bc-4bb8-b27c-b12051005494",
+      "name": "Billing"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "15966809-7fd0-4b45-8706-ab5fa32d8960",
+              "name": "reply",
+              "value": "=Sales queue selected reason: {{ $json.output.reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        768,
+        192
+      ],
+      "id": "4640ff87-580e-4a16-9018-779bf9caee48",
+      "name": "Sales"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8cd1d9b7-7147-4f1e-a314-86706e78c6b1",
+              "name": "reply",
+              "value": "=Support queue selected reason: {{ $json.output.reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        768,
+        0
+      ],
+      "id": "2a0aea50-9298-4907-8f63-71ee48806af8",
+      "name": "Support"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "90a74566-f338-48f7-8265-79b5e17db161",
+              "name": "reply",
+              "value": "Spam queue selected reason: {{ $json.output.reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        752,
+        400
+      ],
+      "id": "518fcd53-756f-4959-ac7d-d18fb0f48f1a",
+      "name": "Spam"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        0
+      ],
+      "id": "b9906a83-b7e1-40ba-9dd4-d923236e8fd8",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "69cbccb7-615c-47e5-9aa6-7af235140bda",
+              "name": "message",
+              "value": "I was charged twice for my subscription this month.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        64,
+        0
+      ],
+      "id": "ac0e37f2-6c94-411d-b9e6-75909f149f7b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "This set field node is just an extra node, which we took in the lecture.\n",
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        752,
+        336
+      ],
+      "id": "eca1c3ce-15c8-4138-b906-6e17f16d2b11",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "The promt which I used in AI Agent node was used with the help of another Ai Agent (chatgpt) to make it better and more strict.",
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        208,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "20d776eb-20b2-48f8-adbf-5cb54bff6b79",
+      "name": "Sticky Note1"
+    }
+  ],
+  "connections": {
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Billing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Support",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sales",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-04-22T15:04:31.596Z"
+}

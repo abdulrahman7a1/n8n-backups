@@ -1,0 +1,57 @@
+{
+  "id": "88XB5jkWIhqvVcfW",
+  "name": "Backup Workflows to GitHub",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 22
+            }
+          ]
+        }
+      },
+      "id": "2e3ed89b-f9f5-4991-8f4a-4b32e367232b",
+      "name": "Every night at 10 PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================= SETTINGS (fill these in) =================\nconst N8N_API_KEY = '***REDACTED***';\nconst GITHUB_TOKEN = '***REDACTED***';\nconst GITHUB_REPO = 'abdulrahman7a1/n8n-backups';\nconst BRANCH = 'main';\n// Secrets written inside your OTHER workflows (e.g. your Steam API key).\n// They get replaced with ***REDACTED*** before anything is uploaded.\nconst EXTRA_SECRETS = ['***REDACTED***'];\n// =============================================================\n\nconst SECRETS = [N8N_API_KEY, GITHUB_TOKEN, ...EXTRA_SECRETS]\n  .filter(s => s && !s.startsWith('PASTE_'));\nconst hide = (text) => {\n  for (const s of SECRETS) text = text.split(s).join('***REDACTED***');\n  return text;\n};\n\nconst http = (opts) => this.helpers.httpRequest({ json: true, ...opts });\n\n// 1) Get every workflow from n8n's own API\nconst workflows = [];\nlet cursor;\ndo {\n  const res = await http({\n    method: 'GET',\n    url: 'http://localhost:5678/api/v1/workflows',\n    headers: { 'X-N8N-API-KEY': N8N_API_KEY },\n    qs: cursor ? { limit: 100, cursor } : { limit: 100 },\n  });\n  workflows.push(...(res.data ?? []));\n  cursor = res.nextCursor;\n} while (cursor);\n\n// 2) Turn each workflow into a file: workflows/<name>-<id>.json\nconst files = workflows.map(wf => {\n  const safe = (wf.name || 'workflow')\n    .replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'workflow';\n  const data = {\n    id: wf.id, name: wf.name, active: wf.active, nodes: wf.nodes,\n    connections: wf.connections, settings: wf.settings, updatedAt: wf.updatedAt,\n  };\n  return { path: `workflows/${safe}-${wf.id}.json`, content: hide(JSON.stringify(data, null, 2)) + '\\n' };\n});\n\n// 3) Commit all files to GitHub as ONE commit\nconst gh = (method, path, body) => http({\n  method,\n  url: `https://api.github.com/repos/${GITHUB_REPO}${path}`,\n  headers: {\n    Authorization: `Bearer ${GITHUB_TOKEN}`,\n    Accept: 'application/vnd.github+json',\n    'User-Agent': 'n8n-backup',\n    'X-GitHub-Api-Version': '2022-11-28',\n  },\n  ...(body ? { body } : {}),\n});\n\nconst ref = await gh('GET', `/git/ref/heads/${BRANCH}`);\nconst parentSha = ref.object.sha;\nconst parent = await gh('GET', `/git/commits/${parentSha}`);\n\nconst tree = await gh('POST', '/git/trees', {\n  base_tree: parent.tree.sha,\n  tree: files.map(f => ({ path: f.path, mode: '100644', type: 'blob', content: f.content })),\n});\n\n// Nothing changed since the last backup -> no new commit\nif (tree.sha === parent.tree.sha) {\n  return [{ json: { status: 'No changes since last backup', workflows: workflows.length } }];\n}\n\nconst when = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Amman' });\nconst commit = await gh('POST', '/git/commits', {\n  message: `Backup ${when} (${workflows.length} workflows)`,\n  tree: tree.sha,\n  parents: [parentSha],\n});\nawait gh('PATCH', `/git/refs/heads/${BRANCH}`, { sha: commit.sha });\n\nreturn [{ json: { status: 'Backed up', workflows: workflows.length, commit: commit.html_url } }];\n"
+      },
+      "id": "fb123b1e-65e0-4f6f-9239-0a30a36af554",
+      "name": "Export & Commit to GitHub",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every night at 10 PM": {
+      "main": [
+        [
+          {
+            "node": "Export & Commit to GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-11-18T09:31:31.806Z"
+}
