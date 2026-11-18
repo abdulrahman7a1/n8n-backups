@@ -1,0 +1,49 @@
+{
+  "id": "6ffme6DNgi29DUG5",
+  "name": "Error Alerts",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c683fa4c-1bf7-49bc-9215-a594cc734cc9",
+      "name": "When any workflow fails",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================= SETTINGS (fill this in) =================\nconst NTFY_TOPIC = 'errorhandling-abdomario7a1';  // same topic as your Steam alerts\n// Don't repeat the same error from the same workflow more than once per:\nconst QUIET_MINUTES = 60;\n// ============================================================\n\nconst d = $input.first().json;\nconst workflowName = d.workflow?.name ?? 'Unknown workflow';\n\n// Errors can come from a normal run (\"execution\") or from the trigger itself (\"trigger\")\nconst err = d.execution?.error ?? d.trigger?.error ?? {};\nconst message = err.message || 'Unknown error';\nconst failedNode = d.execution?.lastNodeExecuted ?? (d.trigger ? 'Trigger' : 'unknown');\nconst link = d.execution?.url;\n\n// Anti-spam: a workflow that runs every 5 minutes would otherwise\n// send the same alert every 5 minutes until you fix it.\nconst state = $getWorkflowStaticData('global');\nstate.recent = state.recent ?? {};\nconst key = `${workflowName}|${message}`.slice(0, 300);\nconst nowMs = Date.now();\nfor (const k of Object.keys(state.recent)) {\n  if (nowMs - state.recent[k] > QUIET_MINUTES * 60000) delete state.recent[k];\n}\nif (state.recent[key]) {\n  return [{ json: { status: 'Skipped (same error already sent recently)', workflowName, message } }];\n}\nstate.recent[key] = nowMs;\n\nconst when = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Amman' });\nconst body = {\n  topic: NTFY_TOPIC,\n  title: `Workflow failed: ${workflowName}`,\n  message: `Node: ${failedNode}\\nError: ${message.slice(0, 500)}\\nTime: ${when}`,\n  tags: ['warning'],\n  priority: 4,\n};\nif (link) body.click = link; // tapping the alert on your PC opens the failed run\n\nawait this.helpers.httpRequest({ method: 'POST', url: 'https://ntfy.sh/', body, json: true });\n\nreturn [{ json: { status: 'Alert sent', workflowName, failedNode, message } }];\n"
+      },
+      "id": "9e19ea91-2409-4fb6-97db-8402e5a44c5a",
+      "name": "Send ntfy alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "When any workflow fails": {
+      "main": [
+        [
+          {
+            "node": "Send ntfy alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-11-18T09:55:46.066Z"
+}

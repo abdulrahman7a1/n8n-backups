@@ -1,0 +1,57 @@
+{
+  "id": "NcyzI4VgI4HNB8hN",
+  "name": "Tool: Steam Progress",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "game"
+            }
+          ]
+        }
+      },
+      "id": "67762664-feed-4390-8486-65bb7136a334",
+      "name": "When called by the AI Agent",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================= SETTINGS (fill these in) =================\nconst STEAM_API_KEY = '***REDACTED***';\nconst STEAM_ID = '76561198347493742';\n// =============================================================\n\nconst api = 'https://api.steampowered.com';\nconst get = (path, qs) =>\n  this.helpers.httpRequest({ method: 'GET', url: api + path, qs: { key: STEAM_API_KEY, ...qs }, json: true });\n\nconst input = $input.first().json;\nconst wanted = String(input.game ?? input.query ?? '').trim();\nconst norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '');\n\nasync function progressFor(appid) {\n  const res = await get('/ISteamUserStats/GetPlayerAchievements/v1/', { steamid: STEAM_ID, appid, l: 'english' });\n  const list = res?.playerstats?.achievements ?? [];\n  const total = list.length;\n  const done = list.filter(a => a.achieved === 1);\n  return { list, total, unlocked: done.length, percent: total ? Math.round(done.length / total * 100) : 0 };\n}\n\n// ---------- No game named: overview of recently played games ----------\nif (!wanted) {\n  const recent = await get('/IPlayerService/GetRecentlyPlayedGames/v1/', { steamid: STEAM_ID, count: 5 });\n  const games = recent?.response?.games ?? [];\n  if (!games.length) return [{ json: { result: 'No games played on Steam in the last 2 weeks.' } }];\n  const lines = [];\n  for (const g of games) {\n    try {\n      const p = await progressFor(g.appid);\n      lines.push(p.total\n        ? `${g.name}: ${p.unlocked}/${p.total} achievements (${p.percent}%), ${(g.playtime_forever / 60).toFixed(1)} h total`\n        : `${g.name}: no achievements`);\n    } catch (e) {\n      lines.push(`${g.name}: achievements unavailable`);\n    }\n  }\n  return [{ json: { result: 'Recently played games:\\n' + lines.join('\\n') } }];\n}\n\n// ---------- Find the game in the user's library ----------\nconst owned = await get('/IPlayerService/GetOwnedGames/v1/', {\n  steamid: STEAM_ID, include_appinfo: 1, include_played_free_games: 1,\n});\nconst library = owned?.response?.games ?? [];\nif (!library.length) {\n  return [{ json: { result: 'Could not read the Steam library. The profile\\'s \"Game details\" may be private.' } }];\n}\n\nconst w = norm(wanted);\nlet game = library.find(g => norm(g.name) === w)\n  ?? library.filter(g => norm(g.name).includes(w)).sort((a, b) => b.playtime_forever - a.playtime_forever)[0]\n  ?? library.filter(g => w.includes(norm(g.name)) && norm(g.name).length > 3)[0];\n\nif (!game) {\n  const words = wanted.toLowerCase().split(/\\s+/).filter(x => x.length > 2);\n  const similar = library\n    .map(g => ({ g, score: words.filter(x => g.name.toLowerCase().includes(x)).length }))\n    .filter(x => x.score > 0).sort((a, b) => b.score - a.score).slice(0, 5).map(x => x.g.name);\n  return [{ json: { result: `No game called \"${wanted}\" in the Steam library.` + (similar.length ? ` Similar: ${similar.join(', ')}` : '') } }];\n}\n\n// ---------- Achievement progress for that game ----------\nlet p;\ntry {\n  p = await progressFor(game.appid);\n} catch (e) {\n  return [{ json: { result: `${game.name} has no achievements, or its achievement data is private.` } }];\n}\nif (!p.total) return [{ json: { result: `${game.name} has no achievements.` } }];\n\n// How rare each achievement is among all players (to suggest the easiest next ones)\nconst rarity = {};\ntry {\n  const g = await get('/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/', { gameid: game.appid });\n  for (const a of g?.achievementpercentages?.achievements ?? []) rarity[a.name] = parseFloat(a.percent);\n} catch (e) { /* optional */ }\n\nconst locked = p.list.filter(a => a.achieved !== 1)\n  .sort((a, b) => (rarity[b.apiname] ?? 0) - (rarity[a.apiname] ?? 0));\nconst recent = p.list.filter(a => a.achieved === 1)\n  .sort((a, b) => b.unlocktime - a.unlocktime).slice(0, 5);\n\nconst fmt = (a) => {\n  const r = rarity[a.apiname];\n  return `- ${a.name || a.apiname}: ${a.description || '(hidden achievement)'}` + (r !== undefined ? ` [${r.toFixed(1)}% of players have it]` : '');\n};\n\nlet result = `${game.name}\\n`\n  + `Progress: ${p.unlocked}/${p.total} achievements (${p.percent}%)` + (p.unlocked === p.total ? ' - PLATINUM (100%) done!' : '') + '\\n'\n  + `Remaining: ${p.total - p.unlocked}\\n`\n  + `Playtime: ${(game.playtime_forever / 60).toFixed(1)} hours\\n`;\nif (recent.length) {\n  result += `\\nMost recent unlocks:\\n` + recent.map(a =>\n    `- ${a.name || a.apiname} (${new Date(a.unlocktime * 1000).toLocaleDateString('en-GB', { timeZone: 'Asia/Amman' })})`).join('\\n') + '\\n';\n}\nif (locked.length) {\n  result += `\\nStill locked (easiest first, ${Math.min(locked.length, 20)} of ${locked.length} shown):\\n`\n    + locked.slice(0, 20).map(fmt).join('\\n');\n}\n\nreturn [{ json: { result } }];\n"
+      },
+      "id": "4568f969-0ce5-45af-ba51-97986df713f3",
+      "name": "Get Steam progress",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "When called by the AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Get Steam progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "updatedAt": "2026-11-18T11:09:28.938Z"
+}

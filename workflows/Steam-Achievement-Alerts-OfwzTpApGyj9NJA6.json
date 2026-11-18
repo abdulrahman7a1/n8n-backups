@@ -1,7 +1,7 @@
 {
   "id": "OfwzTpApGyj9NJA6",
   "name": "Steam Achievement Alerts",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "parameters": {
@@ -51,7 +51,11 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "6ffme6DNgi29DUG5",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "updatedAt": "2026-11-18T09:07:58.616Z"
+  "updatedAt": "2026-11-18T10:17:56.190Z"
 }

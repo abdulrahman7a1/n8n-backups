@@ -1,7 +1,7 @@
 {
   "id": "88XB5jkWIhqvVcfW",
   "name": "Backup Workflows to GitHub",
-  "active": false,
+  "active": true,
   "nodes": [
     {
       "parameters": {
@@ -51,7 +51,11 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "6ffme6DNgi29DUG5",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "updatedAt": "2026-11-18T09:31:31.806Z"
+  "updatedAt": "2026-11-18T09:57:54.310Z"
 }
